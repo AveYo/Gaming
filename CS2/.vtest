@@ -1,0 +1,40 @@
+/// AveYo: use launch option: -testscript "../../csgo/cfg/.vtest" and save this in cfg folder as ".vtest"
+Test_WaitForCheckPoint frame_end
+
+/// AveYo: make sure any aliases below are initialized in autoexec.cfg, example: alias W! ""
+W!
+W!
+A!
+A!
+S!
+S!
+D!
+D!
+
+M1!
+M2!
+
+CJ!
+CJ!
+
+JT!
+JT!
+JT!
+JT!
+
+BH!
+BH!
+BH!
+BH!
+BH!
+
+Q!
+Q!
+E!
+E!
+
+/// AveYo: add one or more to reduce fps impact at the cost of responsiveness; Test_Wait 0.00078125 not advised (works just once)
+//Test_RunFrame
+
+/// AveYo: loop each frame; repeated entries above are chaining multiple alias substitutions in a single run
+Test_Run
