@@ -2,14 +2,15 @@
 Test_WaitForCheckPoint frame_end
 
 /// AveYo: make sure any aliases below are initialized in autoexec.cfg, example: alias W! ""
-W!
-W!
-A!
-A!
-S!
-S!
-D!
-D!
+JT!
+JT!
+JT!
+JT!
+
+Q!
+Q!
+E!
+E!
 
 M1!
 M2!
@@ -17,21 +18,14 @@ M2!
 CJ!
 CJ!
 
-JT!
-JT!
-JT!
-JT!
-
-BH!
-BH!
-BH!
-BH!
-BH!
-
-Q!
-Q!
-E!
-E!
+W!
+W!
+A!
+A!
+S!
+S!
+D!
+D!
 
 /// AveYo: add one or more to reduce fps impact at the cost of responsiveness; Test_Wait 0.00078125 not advised (works just once)
 //Test_RunFrame
