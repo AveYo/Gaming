@@ -1,4 +1,4 @@
-/// AveYo: use launch option: -testscript "../../csgo/cfg/.vtest" and save this in cfg folder as ".vtest"
+/// AveYo: use launch option: -testscript "../../csgo/cfg/a.vtest" and save this in cfg folder as "a.vtest"
 Test_WaitForCheckPoint frame_end
 
 /// AveYo: make sure any aliases below are initialized in autoexec.cfg, example: alias W! ""
@@ -37,4 +37,4 @@ E!
 //Test_RunFrame
 
 /// AveYo: loop each frame; repeated entries above are chaining multiple alias substitutions in a single run
-Test_Run
+Test_Run ../../csgo/cfg/a.vtest
