@@ -1,11 +1,12 @@
 @(set "0=%~f0" '& set 1=%*) & powershell -nop -c "type -raw -lit $env:0 | powershell -nop -c -" & pause & exit /b ');.{
 
-## Benchmark.cfg by AveYo - add the mean median mode at All, P50, P95, P99, 1%L, 0.1%L in the cl_showfps 4 history file
+## Benchmark.cfg by AveYo - add the mean median mode at 0.1% 1% P95 P50 marks in the cl_showfps 4 history file
 $filename = "prof_de_ancient_night"
-function stats($d) {
-  foreach ($g in ($d | group | sort -Descending count)) { if ($g.count -ge $j) {$j = $g.count; $mode = $g.Name} else {break} }
+function stats($d, $c=0) {
+  foreach ($g in ($d | group | sort -Descending count)) { if ($g.count -ge $c) {$c = $g.count; $mode = $g.Name} else {break} }
   $median = if ($d.count % 2) {$d[($d.count/2) - 1]} else {($d[($d.count/2)] + $d[($d.count/2) - 1]) / 2}
-  $mean = if ($d) { ($d |measure-object -average).Average.tostring("#.#") }; "Mean: $mean  Median: $median  Mode: $mode"
+  $mean = if ($d) { ($d |measure-object -average).Average.tostring("#.#") }
+  write-output ("Mean: {0,-5} Median: {1,-5} Mode: {2,-5}" -f $mean,$median,$mode)
 }
 
 $APPID = 730; $APPNAME = "cs2"; $INSTALLDIR = "Counter-Strike Global Offensive"; $MOD = "csgo"; $GAMEBIN = "bin\win64"
@@ -44,26 +45,28 @@ foreach ($nr in $vdf.Item(0).Keys) {
 
 if (test-path "$GAME\$filename.csv") {
   $f = gc "$GAME\$filename.csv"
-  $head = $list = $val = @(); $p01 = $p1 = $p5 = $p50 = $p95 = $p99 = !1
+  $head = $list = $val = @()
   $f1 = $f |foreach {$h1 = 0} {
     $o = $_; $s = $o.split(',:').trim(); if ($s[0] -eq 'Frame Rate') { $h1++ }
     if ($h1 -lt 2) { if ($h1 -eq 1) { $h1++ } ; $head += $o }
     elseif ($h1 -eq 2 -and $s[1] -ne 0) { for ($i=1; $i -le $s[1]; $i++) { $val += [int]$s[0] } ; $list += $o }
   }
-  [array]::reverse($list); [array]::reverse($val); $l = $list.count; $t = $val.count; $c = $t; $z = 0
-  write-host TOTAL $t
+#   [array]::reverse($list); [array]::reverse($val);
+  $l = $list.count; $k = $val.count
+  $p01 = [math]::ceiling($k * 0.001); $p1  = [math]::ceiling($k * 0.01)
+  $p95 = [math]::ceiling($k * 0.05);  $p50 = [math]::ceiling($k * 0.50)
+
   $f2 = $head |foreach {
     $o = $_; $s = $_.split(',:').trim()
-    if ($s[0] -eq 'Total frames') { $o += ", Active : $t"} elseif ($s[0] -eq 'Frame Rate') { $o += ", Stats" } ; $o
+    if ($s[0] -eq 'Total frames') { $o += ", Active : $k"} elseif ($s[0] -eq 'Frame Rate') { $o += ", Stats" } ; $o
   }
-  $f2+= $list |foreach {$n=0;$i=0} {
-    $o = $_; $s = $o.split(',:').trim(); $n += [int]$s[1]; $i++
-    if ($i -eq 1) { $o += ",  All   $(stats $val[0..$t])" }
-    $k = [math]::ceiling($t * 0.50); if (!$p50 -and $n -ge $k) { $p50 = !0; $o += ", P50   $(stats $val[0..$k])" }
-    $k = [math]::ceiling($t * 0.95); if (!$p95 -and $n -ge $k) { $p95 = !0; $o += ", P95   $(stats $val[0..$k])" }
-    $k = [math]::ceiling($t * 0.99); if (!$p99 -and $n -ge $k) { $p99 = !0; $o += ", P99   $(stats $val[0..$k])" }
-    if (!$p01 -and $n -ge ($k + 1)) { $p01 = !0; $o += ", 1%    $(stats $val[$k..$t])" }
-    if ($i -eq $l) { $o += ", 0.1%  $(stats $val[$k..$t])" } ; $o
+  $f2+= $list |foreach {$n = 0} {
+    $o = $_; $s = $o.split(',:').trim(); $n += [int]$s[1]
+    if ($p01 -gt 0 -and $n -ge $p01) { $o += ", 0.1% $(stats $val[0..$p01])";  $p01 = 0 }
+    if ($p1  -gt 0 -and $n -ge $p1)  { $o += ", 1%   $(stats $val[0..$p1])";   $p1  = 0 }
+    if ($p95 -gt 0 -and $n -ge $p95) { $o += ", P95  $(stats $val[$p95..$k])"; $p95 = 0 }
+    if ($p50 -gt 0 -and $n -ge $p50) { $o += ", P50  $(stats $val[0..$k])";    $p50 = 0 }
+    $o
   }
   $f2 | set-content "$GAME\$filename$()_stats.csv" -force; import-csv "$GAME\$filename$()_stats.csv" | Format-Table
 } else { echo $GAME\$filename.csv not found, run benchmark.cfg in the game first }
