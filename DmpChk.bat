@@ -1,18 +1,29 @@
-@(set ^ "0=%~f0" -des ') &set "1=%~1"& powershell -nop -c iex(out-string -i (gc -lit $env:0)) & exit /b ');.{
+@(set "0=%~f0" '& set 1=%*) & powershell -nop -c "type -lit $env:0 | out-string | powershell -nop -c -" & exit /b ');.{
 
-[Console]::Title = "DmpChk by AveYo" ; " read crash .dmp .mdmp on double-click "
-$lastver = 20250310
+$title = "DmpChk"
+$about = "read crash .dmp .mdmp on double-click - AveYo, 2026.03.15"
 
-#:: AveYo: was this directly pasted into powershell? then we must save on disk
-if (!$env:0 -or $env:0 -ne "$env:APPDATA\AveYo\DmpChk.bat" -or $lastver -gt 20250310) {
-  $0 = @('@(set ^ "0=%~f0" -des '') &set "1=%~1"& powershell -nop -c iex(out-string -i (gc -lit $env:0)) & exit /b '');.{' +  
-  ($MyInvocation.MyCommand.Definition) + '};$_press_Enter_if_pasted_in_powershell') -split'\r?\n'
-  mkdir "$env:APPDATA\AveYo" -ea 0; set-content "$env:APPDATA\AveYo\DmpChk.bat" $0 -force
-} 
+### associate .dmp and .mdmp with this script
+$file = "$env:APPDATA\AveYo\$title.ps1"; $open = "powershell -nop -nol -ep remotesigned -file ""$file"" ~\? ""%1"""
+".dmp",".mdmp" |foreach {
+  ni "HKCU:\Software\Classes\$_\shell\open\command" -force >''
+  sp "HKCU:\Software\Classes\$_\shell\open\command" "(Default)" $open
+}
 
-#:: DmpChk by AveYo : read crash dump files (.dmp .mdmp)
-#:: the c# typefinition at the end of the script gets pre-compiled rather than let powershell do it slowly every launch
-$library1 = "DmpChk"; $version1 = "2025.3.10.0"; $about1 = "read crash dump files"; $path1 = "$env:APPDATA\AveYo\$library1.dll"
+### directly pasted into powershell? then save on disk
+$file = "$env:APPDATA\AveYo\$title.ps1"; $file_lines = if (test-path -lit $file) {(gc -lit $file) -ne ''} else {'file'}
+$env0 = if ($env:0 -and (test-path -lit $env:0)) {gc -lit $env:0} else {'env0'} ; $env0_lines = $env0 -ne ''
+$text = "@(set ""0=%~f0"" '${0=%~f0}');.{$($MyInvocation.MyCommand.Definition)} `@args #_press_Enter_if_pasted_in_powershell"
+$text = $text -split '\r?\n'; $text_lines = $text -ne ''; mkdir $(split-path $file) -ea 0 >''
+if (diff $text_lines $env0_lines) { if (diff $file_lines $text_lines) { $text | set-content -force $file} }
+else { if (diff $file_lines $env0_lines) {$env0 | set-content -force -lit $file} }
+
+### main
+$f0 = ($env:0,"$($args[0])")[!$env:0]; $cl = ($env:1,"$($args[1])")[!$env:1]; $ps = {
+[Console]::Title = $title; $about; if ($f0) {pushd -lit $(split-path $f0)} else {pushd -lit ~}
+
+### the c# typefinition at the end of the script gets pre-compiled rather than let powershell do it slowly every launch
+$library1 = "DmpChk"; $version1 = "2026.3.15.0"; $about1 = "read crash dump files"; $path1 = "$env:APPDATA\AveYo\$library1.dll"
 if ((gi $path1 -force -ea 0).VersionInfo.FileVersion -ne $version1) { del $path1 -force -ea 0 } ; if (-not (test-path $path1)) {
   mkdir "$env:APPDATA\AveYo" -ea 0 >'' 2>''; pushd $env:APPDATA\AveYo; " one-time initialization of $library1 library..."
   set-content "$env:APPDATA\AveYo\$library1.cs" $(($MyInvocation.MyCommand.Definition -split '<#[:]LIBRARY1[:].*')[1])
@@ -22,22 +33,19 @@ if ((gi $path1 -force -ea 0).VersionInfo.FileVersion -ne $version1) { del $path1
 }
 try {Import-Module $path1} catch {del $path1 -force -ea 0; " ERROR importing $library1, run script again! "; timeout -1; return}
 
-".dmp",".mdmp" |foreach {
-  ni "HKCU:\Software\Classes\$_\shell\open\command" -force >''
-  sp "HKCU:\Software\Classes\$_\shell\open\command" "(Default)" "`"$env:APPDATA\AveYo\DmpChk.bat`" `"%1`""
-}
+### open dump file
+if ($cl -and (test-path -lit $cl)) { [AveYo.DmpChk]::Open($cl) }
+else { write-host -fore 0 -back 14 " double-click a .dmp or .mdmp file to read "; sleep 5 }
 
-#:: open $env:1 dump file
-if ($env:1 -and (test-path -lit $env:1)) { [AveYo.DmpChk]::Open($env:1) }
-
-#:: done, script closes
-[Environment]::Exit(0)
+### done, script closes
+[Console]::Title = ""
+return
 
 <#:LIBRARY1: start <# ------------------------------------------------------------------------------ switch syntax highlight to C#
 /// DmpChk by AveYo
 using System; using System.Text; using System.IO; using System.Threading;
 using System.Runtime.InteropServices; using System.Diagnostics; using System.Reflection;
-[assembly:AssemblyVersion("2025.3.10.0")] [assembly: AssemblyTitle("AveYo")]
+[assembly:AssemblyVersion("2026.3.15.0")] [assembly: AssemblyTitle("AveYo")]
 namespace AveYo
 {
   public static class DmpChk {
@@ -47,7 +55,7 @@ namespace AveYo
         if (!File.Exists(dmpFile)) throw new FileNotFoundException(dmpFile);
         string dmpCmd1 = @".effmach;vertarget;.echo DmpChk by AveYo;|;.lastevent;.cxr;.exr -1;.ecxr;kb;~* kp;.echo;lmv;.dumpdebug";
         string dmpCmd2 = @".foreach(y {s -a 0 L?0FFFFFFFFFFF ""STEAMID=""}){da ${y};.break}";
-        string dmpExec = String.Format(@".logopen /u ""{0}.txt"";{1};{2};.logclose;qd", dmpFile, dmpCmd1, dmpCmd2);
+        string dmpExec = String.Format(@".logopen ""{0}.txt"";{1};{2};.logclose;qd", dmpFile, dmpCmd1, dmpCmd2);
         try {
           if (debugger.OpenFile(dmpFile) == false) { Console.WriteLine("Failed to open"); return; }
           int hr = debugger.WaitForEvent();
@@ -88,7 +96,7 @@ namespace AveYo
 
     IDebugClient _client;
     IDebugControl _control;
-    
+
     //bool _StateChanged; // ps 2.0
     //public bool StateChanged { get { return _StateChanged;} set { this._StateChanged = value; } }
 
@@ -98,9 +106,9 @@ namespace AveYo
     public UserDebugger() {
       Guid guid = new Guid("27fe5639-8407-4f47-8364-ee118fb08ac8");
       object obj = null;
-      
+
       //_StateChanged = false; // ps 2.0
-      
+
       int hr = DebugCreate(ref guid, out obj);
 
       if (hr < 0) { Console.WriteLine("SourceFix: Unable to acquire client interface"); return; }
@@ -1153,4 +1161,4 @@ namespace AveYo
   }
 }
 <#:LIBRARY1: end -------------------------------------------------------------------------------------------------------------- #>
-};$_press_Enter_if_pasted_in_powershell
+};. $ps -title $title -about $about -f0 $f0 -cl $cl } @args #_press_Enter_if_pasted_in_powershell
