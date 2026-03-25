@@ -1,7 +1,6 @@
 @(set "0=%~f0" '& set 1=%*) & powershell -nop -c "type -raw -lit $env:0 | powershell -nop -c -" & pause & exit /b ');.{
 
-## Benchmark.cfg by AveYo - add the mean median mode at P01 P1 P95 P50 P90 marks in the cl_showfps 4 history file
-$filename = "prof_de_ancient_night"
+##  AveYo: add the mean median mode at P01 P1 P95 P50 P90 marks in the cl_showfps 4 history file
 function stats($d, $c=0) {
   foreach ($g in ($d | group | sort -Descending count)) { if ($g.count -ge $c) {$c = $g.count; $mode = $g.Name} else {break} }
   $median = if ($d.count % 2) {$d[($d.count/2) - 1]} else {($d[($d.count/2)] + $d[($d.count/2) - 1]) / 2}
@@ -43,8 +42,8 @@ foreach ($nr in $vdf.Item(0).Keys) {
   }
 }
 
-if (test-path "$GAME\$filename.csv") {
-  $f = gc "$GAME\$filename.csv"
+dir "$GAME\prof_*.csv" |where Name -notlike '*_stats.csv' |foreach {
+  $filename = $_.BaseName; $f = gc $_
   $head = @(); $list = @(); $val = @()
   $f1 = $f |foreach {$h1 = 0} {
     $o = $_; $s = $o.split(',:').trim(); if ($s[0] -eq 'Frame Rate') { $h1++ }
@@ -67,7 +66,8 @@ if (test-path "$GAME\$filename.csv") {
     if ($p90 -gt 0 -and $n -ge $p90) { $o += ", >  10% $(stats $val[$p90..$k])"; $p90 = 0 }
     $o
   }
-  $f2 | set-content "$GAME\$filename$()_stats.csv" -force; import-csv "$GAME\$filename$()_stats.csv" | Format-Table
-} else { echo $GAME\$filename.csv not found, run benchmark.cfg in the game first }
+  $f2 | set-content "$GAME\$($_.BaseName)_stats.csv" -force
+  write-host -fore 0 -back 14 -nonew $filename; import-csv "$GAME\$($_.BaseName)_stats.csv" | Format-Table
+}
 
 } #_press_Enter_if_pasted_in_powershell
