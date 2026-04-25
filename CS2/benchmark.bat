@@ -1,4 +1,4 @@
-@(set "0=%~f0" '& set 1=%*) & powershell -nop -c "type -raw -lit $env:0 | powershell -nop -c -" & pause & exit /b ');.{
+@(set "0=%~f0" '& set 1=%*) & powershell -nop -c .([scriptblock]::create((type -raw $env:0))) $env:1 & pause & exit /b ')
 
 ##  AveYo: add the mean median mode at P01 P1 P95 P50 P90 marks in the cl_showfps 4 history file
 function stats($d, $c=0) {
@@ -43,21 +43,17 @@ foreach ($nr in $vdf.Item(0).Keys) {
 }
 
 dir "$GAME\prof_*.csv" |where Name -notlike '*_stats.csv' |foreach {
-  $filename = $_.BaseName; $f = gc $_
-  $head = @(); $list = @(); $val = @()
-  $f1 = $f |foreach {$h1 = 0} {
-    $o = $_; $s = $o.split(',:').trim(); if ($s[0] -eq 'Frame Rate') { $h1++ }
-    if ($h1 -lt 2) { if ($h1 -eq 1) { $h1++ } ; $head += $o }
-    elseif ($h1 -eq 2 -and $s[1] -ne 0) { for ($i=1; $i -le $s[1]; $i++) { $val += [int]$s[0] } ; $list += $o }
+  $filename = $_.BaseName; write-host -fore 0 -back 14 -nonew $filename; $f = (gc -raw $_) -split "Total Frames.*|Frame Rate.*"
+  $add = $f[0] -split '\r?\n'; $list = [Collections.Generic.List[string]]@(); $val = [Collections.Generic.List[int]]@()
+  $f[2] -split '\r?\n' |foreach {
+    [double[]]$s = $_.split(',:').trim();
+    if ([int]$s[1] -gt 0) { while ($s[1] -gt 0) { [void]$val.Add($s[0]); $s[1]-- } ; [void]$list.Add($_) }
   }
   $l = $list.count; $k = $val.count
   $p1  = [math]::ceiling($k * 0.01); $p01 = [math]::ceiling($k * 0.001)
   $p95 = [math]::ceiling($k * 0.05); $p90 = [math]::ceiling($k * 0.90); $p50 = [math]::ceiling($k * 0.50)
-  $f2 = $head |foreach {
-    $o = $_; $s = $_.split(',:').trim()
-    if ($s[0] -eq 'Total frames') { $o += ", Active : $k"} elseif ($s[0] -eq 'Frame Rate') { $o += ", Stats" } ; $o
-  }
-  $f2+= $list |foreach {$n = 0} {
+  $add+= "Total Frames : $k"; $add += "Frame Rate, Number of Frames, Percent of Frames, Stats"
+  $add+= $list |foreach {$n = 0} {
     $o = $_; $s = $o.split(',:').trim(); $n += [int]$s[1]
     if ($p01 -gt 0 -and $n -ge $p01) { $o += ", < 0.1% $(stats $val[0..$p01])";  $p01 = 0 }
     if ($p1  -gt 0 -and $n -ge $p1)  { $o += ", <   1% $(stats $val[0..$p1])";   $p1  = 0 }
@@ -66,8 +62,8 @@ dir "$GAME\prof_*.csv" |where Name -notlike '*_stats.csv' |foreach {
     if ($p90 -gt 0 -and $n -ge $p90) { $o += ", >  10% $(stats $val[$p90..$k])"; $p90 = 0 }
     $o
   }
-  $f2 | set-content "$GAME\$($_.BaseName)_stats.csv" -force
-  write-host -fore 0 -back 14 -nonew $filename; import-csv "$GAME\$($_.BaseName)_stats.csv" | Format-Table
+  $add | set-content "$GAME\$($_.BaseName)_stats.csv" -force
+  import-csv "$GAME\$($_.BaseName)_stats.csv" | Format-Table
 }
 
-} #_press_Enter_if_pasted_in_powershell
+#_press_Enter_if_pasted_in_powershell
