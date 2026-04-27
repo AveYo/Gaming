@@ -1,7 +1,7 @@
-@(set "0=%~f0" '& set 1=%*) & powershell -nop -c "type -lit $env:0 | out-string | powershell -nop -c -" & exit /b ');.{
+@(set "0=%~f0" '& set 1=%*) & powershell -nop -c .([scriptblock]::create((type -raw $env:0))) $env:1 & exit /b ');.{
 
 $title = "DmpChk"
-$about = "read crash .dmp .mdmp on double-click - AveYo, 2026.03.15"
+$about = "read crash .dmp .mdmp on double-click - AveYo, 2026.04.27"
 
 ### associate .dmp and .mdmp with this script
 $file = "$env:APPDATA\AveYo\$title.ps1"; $open = "powershell -nop -nol -ep remotesigned -file ""$file"" ~\? ""%1"""
@@ -13,7 +13,7 @@ $file = "$env:APPDATA\AveYo\$title.ps1"; $open = "powershell -nop -nol -ep remot
 ### directly pasted into powershell? then save on disk
 $file = "$env:APPDATA\AveYo\$title.ps1"; $file_lines = if (test-path -lit $file) {(gc -lit $file) -ne ''} else {'file'}
 $env0 = if ($env:0 -and (test-path -lit $env:0)) {gc -lit $env:0} else {'env0'} ; $env0_lines = $env0 -ne ''
-$text = "@(set ""0=%~f0"" '${0=%~f0}');.{$($MyInvocation.MyCommand.Definition)} `@args #_press_Enter_if_pasted_in_powershell"
+$text = "@(set ""0=%~f0"" '${0=%~f0}');.{$($MyInvocation.MyCommand.Definition)} `@args`n#_press_Enter_if_pasted_in_powershell"
 $text = $text -split '\r?\n'; $text_lines = $text -ne ''; mkdir $(split-path $file) -ea 0 >''
 if (diff $text_lines $env0_lines) { if (diff $file_lines $text_lines) { $text | set-content -force $file} }
 else { if (diff $file_lines $env0_lines) {$env0 | set-content -force -lit $file} }
@@ -1161,4 +1161,5 @@ namespace AveYo
   }
 }
 <#:LIBRARY1: end -------------------------------------------------------------------------------------------------------------- #>
-};. $ps -title $title -about $about -f0 $f0 -cl $cl } @args #_press_Enter_if_pasted_in_powershell
+};. $ps -title $title -about $about -f0 $f0 -cl $cl } @args
+#_press_Enter_if_pasted_in_powershell
