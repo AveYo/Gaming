@@ -49,7 +49,7 @@ dir "$GAME\prof_*.csv" | foreach {
     $n+= $row.Number
     if ($p01 -gt 0 -and $n -ge $p01) { $s = " < 0.1%  $(stats $enum[0..$p01])";  $row.Stats = $s; $s; $p01 = 0 }
     if ($p1  -gt 0 -and $n -ge $p1)  { $s = " <   1%  $(stats $enum[0..$p1])";   $row.Stats = $s; $s; $p1  = 0 }
-    if ($p5  -gt 0 -and $n -ge $p5)  { $s = " <   5%  $(stats $enum[0..$p95])";  $row.Stats = $s; $s; $p5  = 0 }
+    if ($p5  -gt 0 -and $n -ge $p5)  { $s = " <   5%  $(stats $enum[0..$p5])";   $row.Stats = $s; $s; $p5  = 0 }
     if ($p50 -gt 0 -and $n -ge $p50) { $s = " =  50%  $(stats $enum[0..$e])";    $row.Stats = $s; $s; $p50 = 0 }
     if ($p90 -gt 0 -and $n -ge $p90) { $s = " >  90%  $(stats $enum[$p90..$e])"; $row.Stats = $s; $s; $p90 = 0 }
   }
