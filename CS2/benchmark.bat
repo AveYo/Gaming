@@ -1,7 +1,8 @@
 @(set "0=%~f0" ') & powershell -nop -c .([scriptblock]::create((type $env:0 -raw))) & exit /b ');.{
 @'
- generate Benchmark.cfg v2026.05.13  -  run from CS2 in-game console with: BB
- extra: add stats in the csv files output from cl_showfps 4
+ generate Benchmark.cfg v2026.05.15  -  run from CS2 in-game console with: BB
+ print stats for the csv files output from cl_showfps 4
+ useful to pick a fps_max at the > 99% mark and benchmark again
 '@
 ##  AveYo: detect STEAM and APP folder
 $APPID = 730; $APPNAME = "cs2"; $INSTALLDIR = "Counter-Strike Global Offensive"; $MOD = "csgo"; $GAMEBIN = "bin\win64"
@@ -21,15 +22,15 @@ foreach ($nr in $vdf.Item(0).Keys) { if ($vdf.Item(0)[$nr]["apps"] -and $vdf.Ite
   if (test-path "$i\game\$MOD\steam.inf") { $STEAMAPPS = "$l\steamapps"; $GAMEROOT = "$i\game"; $GAME = "$i\game\$MOD" }  }
 }
 
-## AveYo: print Med Mean Mode stats at the <0.1% <1% <5% =50% >90% marks
+## AveYo: print Med Mean Mode stats at the <0.1% <1% <5% =50% >95% >99% marks
 function stats($d, $l=0, $c=0) {
   foreach ($g in ($d | group | sort -Descending count)) { if ($g.count -ge $c) {$c = $g.count; $mode = $g.Name} else {break} }
   $med = if ($d.count % 2) {$d[($d.count/2) - 1]} else {($d[($d.count/2)] + $d[($d.count/2) - 1]) / 2}
   $mean = if ($d) { ($d | measure-object -average).Average }
-  $m1 = "{0:F4}" -f $mean; $m2 = "{0:F4}" -f $med; $m3 = "{0:F4}" -f $mode
-  $m4 = "{0:F4}" -f (1000/$mean); $m5 = "{0:F4}" -f (1000/$med); $m6 = "{0:F0}" -f (1000/$mode)
-  if ($l -eq 0) { write-output ("Mean: {0,8}  Median: {1,8}  Mode: {2,4}" -f $m1,$m2,$m3) } ## fps
-  if ($l -eq 1) { write-output ("Mean: {0,8}  Median: {1,8}  Mode: {2,4}" -f $m4,$m5,$m6) } ## ms
+  $m1 = "{0:F4}" -f $med; $m2 = "{0:F4}" -f $mean; $m3 = "{0:F4}" -f $mode
+  $m4 = "{0:F4}" -f (1000/$med); $m5 = "{0:F4}" -f (1000/$mean); $m6 = "{0:F0}" -f (1000/$mode)
+  if ($l -eq 0) { write-output ("Median: {0,8}  Mean: {1,8}  Mode: {2,4}" -f $m1,$m2,$m3) } ## fps
+  if ($l -eq 1) { write-output ("Median: {0,8}  Mean: {1,8}  Mode: {2,4}" -f $m4,$m5,$m6) } ## ms
 }
 
 ## AveYo: process the cl_showfps 4 csv files
@@ -43,15 +44,16 @@ dir "$GAME\prof_*.csv" | foreach {
   $data = $cols | Select @{Name="Frames";Expression={[int]$_.F}},@{Name="Number";Expression={[int]$_.N}},'Percent','Stats'
   foreach ($row in $data) { $i = $row.Frames; $n = $row.Number; while ($n -gt 0) { [void]$enum.Add($i); $n-- } }
   $e = $enum.count; $d = $data.count; $n = 0; $total = "Total : $e`r`n"; $save += $total
-  $p01 = [math]::ceiling($e * 0.001); $p1 = [math]::ceiling($e * 0.01); $p5 = [math]::ceiling($e * 0.05)
-  $p50 = [math]::ceiling($e * 0.50); $p90 = [math]::ceiling($e * 0.90)
+  $p01 = [math]::ceiling($e * 0.001); $p1 = [math]::ceiling($e * 0.01); $p5  = [math]::ceiling($e * 0.05)
+  $p50 = [math]::ceiling($e * 0.50); $p95 = [math]::ceiling($e * 0.95); $p99 = [math]::ceiling($e * 0.99)
   foreach ($row in $data) {
-    $n+= $row.Number
-    if ($p01 -gt 0 -and $n -ge $p01) { $s = " < 0.1%  $(stats $enum[0..$p01])";  $row.Stats = $s; $s; $p01 = 0 }
-    if ($p1  -gt 0 -and $n -ge $p1)  { $s = " <   1%  $(stats $enum[0..$p1])";   $row.Stats = $s; $s; $p1  = 0 }
-    if ($p5  -gt 0 -and $n -ge $p5)  { $s = " <   5%  $(stats $enum[0..$p5])";   $row.Stats = $s; $s; $p5  = 0 }
-    if ($p50 -gt 0 -and $n -ge $p50) { $s = " =  50%  $(stats $enum[0..$e])";    $row.Stats = $s; $s; $p50 = 0 }
-    if ($p90 -gt 0 -and $n -ge $p90) { $s = " >  90%  $(stats $enum[$p90..$e])"; $row.Stats = $s; $s; $p90 = 0 }
+    $n+= $row.Number; $v = $row.Frames
+    if ($p01 -gt 0 -and $n -ge $p01) { $s = "{0,4} < 0.1%  $(stats $enum[0..$p01])"  -f $v; $row.Stats = $s; $s; $p01 = 0 }
+    if ($p1  -gt 0 -and $n -ge $p1)  { $s = "{0,4} <   1%  $(stats $enum[0..$p1])"   -f $v; $row.Stats = $s; $s; $p1  = 0 }
+    if ($p5  -gt 0 -and $n -ge $p5)  { $s = "{0,4} <   5%  $(stats $enum[0..$p5])"   -f $v; $row.Stats = $s; $s; $p5  = 0 }
+    if ($p50 -gt 0 -and $n -ge $p50) { $s = "{0,4} =  50%  $(stats $enum[0..$e])"    -f $v; $row.Stats = $s; $s; $p50 = 0 }
+    if ($p95 -gt 0 -and $n -ge $p95) { $s = "{0,4} >  95%  $(stats $enum[$p95..$e])" -f $v; $row.Stats = $s; $s; $p95 = 0 }
+    if ($p99 -gt 0 -and $n -ge $p99) { $s = "{0,4} >  99%  $(stats $enum[$p99..$e])" -f $v; $row.Stats = $s; $s; $p99 = 0 }
   }
   $save += $data | convertto-csv -notypeinfo
   $save | set-content $file -force
@@ -806,5 +808,5 @@ sv_cheats 0
 '@
 }
 
-if ($env:0 -like '*.bat') { choice /c QU1T /d Q /t 15 }
+if ($env:0 -like '*.bat') { pause }
 } #_press_Enter_if_pasted_in_powershell
