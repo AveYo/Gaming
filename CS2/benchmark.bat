@@ -1,7 +1,8 @@
-@(set "0=%~f0" ') & powershell -nop -c .([scriptblock]::create((type $env:0 -raw))) & exit /b ');.{
+@(set "0=%~f0" ') & powershell -nop -c .([scriptblock]::create((type $env:0 -raw))) & pause &exit /b ');.{
 @'
- generate Benchmark.cfg v2026.05.15  -  run from CS2 in-game console with: BB
- print stats for the csv files output from cl_showfps 4
+ generate Benchmark.cfg v2026.05.16  -  run from CS2 in-game console with: BB
+ print last VProf from console.log if using launch option: -condebug
+ print stats for the prof_mapname.csv files output when using cl_showfps 4
  useful to pick a fps_max at the > 99% mark and benchmark again
 '@
 ##  AveYo: detect STEAM and APP folder
@@ -31,6 +32,14 @@ function stats($d, $l=0, $c=0) {
   $m4 = "{0:F4}" -f (1000/$med); $m5 = "{0:F4}" -f (1000/$mean); $m6 = "{0:F0}" -f (1000/$mode)
   if ($l -eq 0) { write-output ("Median: {0,8}  Mean: {1,8}  Mode: {2,4}" -f $m1,$m2,$m3) } ## fps
   if ($l -eq 1) { write-output ("Median: {0,8}  Mean: {1,8}  Mode: {2,4}" -f $m4,$m5,$m6) } ## ms
+}
+
+## AveYo: parse console.log ( enable with -condebug ) for last VProf lines, and add it to output
+if (test-path "$GAME\console.log") {
+  $text = (((get-content "$GAME\console.log" -raw) -split 'Map: "[^<]')[-1] -split '\r?\n' | where {
+    $_ -match 'VProf]\s+[A-Z]|Client] Created physics for' -and $_ -notmatch 'VProfLite|Performance report'
+  }) -replace '.*VProf]','' -replace '(.*) \[Client] Created physics for',"`n [VProf-last-run] `$1"
+  write-output $text
 }
 
 ## AveYo: process the cl_showfps 4 csv files
