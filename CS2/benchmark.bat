@@ -71,16 +71,16 @@ dir "$GAME\prof_*.csv" | foreach {
 $bb = 'alias bb "alias set v2;sv_cheats 1;exec_async benchmark"'
 if (((get-content "$GAME\cfg\autoexec.cfg" -raw -ea 0)+'') -notlike "*$bb*") { add-content "$GAME\cfg\autoexec.cfg" $bb }
 
-$ver = 'v2026.05.10'
+$ver = 'v2026.05.16'
 if (((get-content "$GAME\cfg\benchmark.cfg" -raw -ea 0)+'') -notlike "*$ver*") { set-content "$GAME\cfg\benchmark.cfg" @'
-echo Benchmark.cfg by AveYo       /// v2026.05.10        /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
+echo Benchmark.cfg by AveYo       /// v2026.05.16        /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
 alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: bb
 /// [CHANGE] v2 script requires the secondary benchmark2.cfg in the cfg folder to wait for map load
 
 alias go "alias new;map de_ancient       gamemode=casual customgamemode=0 nomapvalidation=1 loopback=0"
 alias go "alias new;map de_ancient_night gamemode=casual customgamemode=0 nomapvalidation=1 loopback=0"
 alias v1 "alias new go; alias wait exec_async benchmark;alias done exec_async benchmark2;player_teamplayedlast 0; hideconsole"
-alias v2 "alias set;v1; grep . [Console] counter = ;incrementvar sv_pausable 1 9999 1;fps_max;echo sys_info for more settings"
+alias v2 "alias set f8; v1; grep . [Console] counter = ;incrementvar sv_pausable 1 9999 1;fps_max;echo sys_info for more info"
 set
 log_flags Console +donotecho
 log_flags General InputService Developer DeveloperVerbose VScript BuildSparseShadowTree stringtables +donotecho
@@ -91,6 +91,12 @@ log_flags "SV CommandQueue" "CL CommandQueue" "Command Queue Events" "Command Qu
 log_flags Prediction Shooting Missions RenderPipelineCsgo +donotecho
 log_color Console FFFFFFFF
 log_color VProf   FC52FFFF
+
+alias f8 "alias set;bind F8 +break"
+alias +break "disconnect;cl_showfps 0;exec gamemode_competitive;log_flags InputService General Console -donotecho"
+alias -break "sv_cheats 0" /// a must to stopping exec_async scripts
+alias qq "+break;-break"
+set
 
 /// BENCHMARK CVARS
 bot_join_team any
@@ -205,15 +211,16 @@ toggle player_teamplayedlast ";wait" "2" ";done" "3" ";done" /// sv_full_alltalk
 '@
 }
 
-if (((get-content "$GAME\cfg\benchmark2.cfg" -raw -ea 0)+'') -notlike "*$ver*") { set-content "$GAME\cfg\benchmark2.cfg" @'
-echo Benchmark2.cfg by AveYo       /// v2026.05.10       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
+$ver2 = 'v2026.05.16'
+if (((get-content "$GAME\cfg\benchmark2.cfg" -raw -ea 0)+'') -notlike "*$ver2*") { set-content "$GAME\cfg\benchmark2.cfg" @'
+echo Benchmark2.cfg by AveYo       /// v2026.05.16       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
 alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: bb
 /// [CHANGE] v2 script requires the secondary benchmark2.cfg in the cfg folder to wait for map load
 
 /// ADD BOTS
+alias set;
 alias wait;
 alias done;
-alias set;
 player0_using_joystick 1
 bot_kick
 sleep 200
@@ -810,7 +817,7 @@ log_flags ResourceSystem MaterialSystem RenderSystem WorldRenderer SceneSystem S
 log_flags SignonState SteamNetSockets NetSteamConn Networking Client Server Host HostStateManager -donotecho
 log_flags InputService Developer DeveloperVerbose VScript BuildSparseShadowTree stringtables General -donotecho
 log_flags Console -donotecho
-echo Benchmark.cfg by AveYo done! enter BB to run again
+echo Benchmark.cfg by AveYo done! enter BB to run again, QQ or press F8 to force stop
 echoln " "
 sv_cheats 0
 /// benchmark2.cfg
