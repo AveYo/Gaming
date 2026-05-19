@@ -1,6 +1,6 @@
 @(set "0=%~f0" ') & powershell -nop -c .([scriptblock]::create((type $env:0 -raw))) & exit /b ');.{
 @'
- generate Benchmark.cfg v2026.05.17 -Run from CS2 in-game console with: BB
+ generate Benchmark.cfg v2026.05.19 -Run from CS2 in-game console with: BB
  print last VProf from console.log if using launch option: -condebug
  print cl_showfps 4 stats from prof_mapname.csv output
  useful to pick a fps_max at the > 99% mark and benchmark again
@@ -71,19 +71,22 @@ dir "$GAME\prof_*.csv" | sort LastWriteTime -Descending | foreach {
   $save | set-content $file -force
 }
 
-$bb = 'alias bb "alias set v2;sv_cheats 1;exec_async benchmark"'
-if (((get-content "$GAME\cfg\autoexec.cfg" -raw -ea 0)+'') -notlike "*$bb*") { add-content "$GAME\cfg\autoexec.cfg" $bb }
+$cfg = "$GAME\cfg\autoexec.cfg"; $content = (get-content $cfg -raw -ea 0)+''
+$bb  = 'alias bb "alias set v2;sv_cheats 1;exec_async benchmark"'; if ($content -notlike "*$bb*") { add-content $cfg "`r`n$bb" }
+$bx  = 'alias bx "alias set vx;sv_cheats 1;exec_async benchmark"'; if ($content -notlike "*$bx*") { add-content $cfg "`r`n$bx" }
 
-$ver = 'v2026.05.16'
+$ver = 'v2026.05.19'
 if (((get-content "$GAME\cfg\benchmark.cfg" -raw -ea 0)+'') -notlike "*$ver*") { set-content "$GAME\cfg\benchmark.cfg" @'
-echo Benchmark.cfg by AveYo       /// v2026.05.16        /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
-alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: bb
+echo  Benchmark.cfg by AveYo       /// v2026.05.19       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
+alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: BB
+alias bx "alias set vx;sv_cheats 1;exec_async benchmark" /// Can also loop 10 times with: BX
 /// [CHANGE] v2 script requires the secondary benchmark2.cfg in the cfg folder to wait for map load
 
 alias go "alias new;map de_ancient       gamemode=casual customgamemode=0 nomapvalidation=1 loopback=0"
 alias go "alias new;map de_ancient_night gamemode=casual customgamemode=0 nomapvalidation=1 loopback=0"
-alias v1 "alias new go; alias wait exec_async benchmark;alias done exec_async benchmark2;player_teamplayedlast 0; hideconsole"
-alias v2 "alias set f8; v1; grep . [Console] counter = ;incrementvar sv_pausable 1 9999 1;fps_max;echo sys_info for more info"
+alias v1 "alias new go; alias set f8; alias wait exec_async benchmark;alias done exec_async benchmark2;player_teamplayedlast 0"
+alias v2 "v1;alias loop x0;grep . [Console] counter = ;incrementvar sv_pausable 1 999 1;fps_max;alias rt mp_roundtime_defuse 2"
+alias vx "v1;alias loop x1;grep . [Console] counter = ;incrementvar sv_pausable 1 1 999;fps_max;alias rt mp_roundtime_defuse 11"
 set
 log_flags Console +donotecho
 log_flags General InputService Developer DeveloperVerbose VScript BuildSparseShadowTree stringtables +donotecho
@@ -95,11 +98,25 @@ log_flags Prediction Shooting Missions RenderPipelineCsgo +donotecho
 log_color Console FFFFFFFF
 log_color VProf   FC52FFFF
 
-alias f8 "alias set;bind F8 +break"
-alias +break "disconnect;cl_showfps 0;exec gamemode_competitive;log_flags InputService General Console -donotecho"
+/// Press F8 or enter: QQ to interrupt at any time
+alias f8 "alias set; hideconsole; bind F8 +break"
+alias +break "disconnect;cl_showfps 0;sv_pausable 0;exec gamemode_competitive;log_flags InputService General Console -donotecho"
 alias -break "sv_cheats 0" /// a must to stopping exec_async scripts
 alias qq "+break;-break"
 set
+
+/// Loop 10 times with BX (for standard deviation & other stats via a descriptive statistics calculator)
+alias re "grep . [Console] counter = ;incrementvar sv_pausable 1 999 1;hideconsole;alias set v1;exec_async benchmark"
+alias x0 "alias loop;sv_cheats 0"
+alias x1 "alias loop x2;alias rt mp_roundtime_defuse 10;re"
+alias x2 "alias loop x3;alias rt mp_roundtime_defuse  9;re"
+alias x3 "alias loop x4;alias rt mp_roundtime_defuse  8;re"
+alias x4 "alias loop x5;alias rt mp_roundtime_defuse  7;re"
+alias x5 "alias loop x6;alias rt mp_roundtime_defuse  6;re"
+alias x6 "alias loop x7;alias rt mp_roundtime_defuse  5;re"
+alias x7 "alias loop x8;alias rt mp_roundtime_defuse  4;re"
+alias x8 "alias loop x9;alias rt mp_roundtime_defuse  3;re"
+alias x9 "alias loop x0;alias rt mp_roundtime_defuse  2;re"
 
 /// BENCHMARK CVARS
 bot_join_team any
@@ -162,7 +179,7 @@ mp_endwarmup_player_count 21
 mp_match_restart_delay 0
 mp_match_end_restart 0
 mp_match_end_changelevel 1
-mp_roundtime_defuse 11 //2.05
+rt // mp_roundtime_defuse 2
 mp_team_intro_time 0
 mp_win_panel_display_time 0
 mp_freezetime 0
@@ -214,10 +231,11 @@ toggle player_teamplayedlast ";wait" "2" ";done" "3" ";done" /// sv_full_alltalk
 '@
 }
 
-$ver2 = 'v2026.05.16'
+$ver2 = 'v2026.05.19'
 if (((get-content "$GAME\cfg\benchmark2.cfg" -raw -ea 0)+'') -notlike "*$ver2*") { set-content "$GAME\cfg\benchmark2.cfg" @'
-echo Benchmark2.cfg by AveYo       /// v2026.05.16       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
-alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: bb
+echo Benchmark.cfg by AveYo       /// v2026.05.19        /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
+alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: BB
+alias bx "alias set vx;sv_cheats 1;exec_async benchmark" /// Can also loop 10 times with: BX
 /// [CHANGE] v2 script requires the secondary benchmark2.cfg in the cfg folder to wait for map load
 
 /// ADD BOTS
@@ -369,6 +387,7 @@ sleep 200
 -left
 setpos -1971 93 77
 setang 0 100 0
+crosshair 0
 thirdperson
 sleep 200
 +attack
@@ -414,6 +433,7 @@ sleep 300
 -left
 turnleft -0.75 0 0
 sleep 300
+crosshair 1
 firstperson
 yaw 80 0 0
 pitch 8 0 0
@@ -476,6 +496,7 @@ bot_mimic 0
 /// T START PLACE BOTS
 setpos -300 -2400 -163
 setang 0 180 0
+crosshair 0
 thirdperson
 +right
 sleep 1600
@@ -496,6 +517,7 @@ sleep 200
 slot2
 sleep 500
 -back
+crosshair 1
 firstperson
 setang 20 180 0
 sleep 500
@@ -822,7 +844,7 @@ log_flags InputService Developer DeveloperVerbose VScript BuildSparseShadowTree 
 log_flags Console -donotecho
 echo Benchmark.cfg by AveYo done! enter BB to run again, QQ or press F8 to force stop
 echoln " "
-sv_cheats 0
+loop // sv_cheats 0 or next loop if using BX to run 10 times
 /// benchmark2.cfg
 '@
 }
