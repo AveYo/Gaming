@@ -1,4 +1,6 @@
-/// AveYo: use launch option: -testscript "../../csgo/cfg/a.vtest" and save this in cfg folder as "a.vtest"
+/// AveYo: after years of unimpeded usage in CS2 they've finally added -insecure requirement to -testscript on 2026.05.21 
+/// AveYo: but not to the other one.. are valve devs the laziest in the business or is the half-arsing intented? 
+/// AveYo: use launch option: -testscript_inline "Test_Run ../../csgo/cfg/a.vtest" and save this in cfg folder as "a.vtest"
 Test_WaitForCheckPoint frame_end
 
 /// AveYo: make sure any aliases below are initialized in autoexec.cfg, example: alias W! ""
