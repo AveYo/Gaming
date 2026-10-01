@@ -1,5 +1,5 @@
-@(set ^ "0=%~f0" -des ') &set 1=%*& powershell -nop -c iex(out-string -i (gc -lit $env:0)) & exit /b ')
-# AveYo: fix annoyance after uninstalling Xbox, AveYo 2024.12.28
+@(set "0=%~f0" ') & powershell -nop .([scriptblock]::create((type $env:0 -raw))) %* & exit /b ')
+# AveYo: fix annoyance after uninstalling Xbox, AveYo 2026.10.01
 
 $id = 'ms-gamebar-annoyance'
 
@@ -20,7 +20,7 @@ sp "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled"
 sp "HKCU:\System\GameConfigStore" "GameDVR_Enabled" $toggle -type dword -force -ea 0
 
 #:: Under admin user
-$ps = { 
+$ps = {
   $f0 = $args[0]; $cl = $args[1]; $id = $args[2]; [Console]::Title = "$id $cl"
   $toggle = (1,0)[$cl -eq 'apply']
   sp "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR" "AppCaptureEnabled" $toggle -type dword -force -ea 0
@@ -36,7 +36,7 @@ $ps = {
       sp "Registry::HKCR\$_\shell\open\command" "(Default)" "`"$env:SystemRoot\System32\systray.exe`"" -force
     } else {
       rp "Registry::HKCR\$_" "NoOpenWith" -force -ea 0
-      ri "Registry::HKCR\$_\shell" -rec -force -ea 0 
+      ri "Registry::HKCR\$_\shell" -rec -force -ea 0
     }
   }
   start ms-gamebar://annoyance # AveYo: test if working
@@ -44,9 +44,10 @@ $ps = {
 
 #:: Elevate
 if ([Security.Principal.WindowsIdentity]::GetCurrent().Groups.Value -notcontains 'S-1-5-32-544') {
-  write-host " '$id' $cl : Requesting ADMIN rights.. " -fore Black -back Yellow; sleep 2; pushd ~ 
-  sp HKCU:\Volatile*\* $id ".{$ps} '$($f0-replace"'","''")' '$($cl-replace"'","''")' '$id'" -force -ea 0
-  start powershell -args "-nop -c iex(gp Registry::HKU\S-1-5-21*\Volatile*\* '$id' -ea 0).'$id'" -verb runas; popd
-} else {. $ps $f0 $cl $id}  
+  write-host " '$id' Requesting ADMIN rights.. " -fore Black -back Yellow; sleep 2; pushd ~
+  sp HKCU:\Volatile*\* $id ".{$ps} '$($f0-replace"'","''")' '$($cl-replace"'","''")' '$id'" -type MultiString -force -ea 0
+  start powershell -args "-nop .([scriptblock]::create((gpv registry::HKU\S-1-5-21*\Volatile*\* '$id')))" -verb runas; popd
+} else {. $ps $f0 $cl $id }
 
 $Press_Enter_if_pasted_in_powershell
+
