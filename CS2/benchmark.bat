@@ -1,6 +1,6 @@
 @(set "0=%~f0" ') & powershell -nop -c .([scriptblock]::create((type $env:0 -raw))) & exit /b ');.{
 @'
- generate Benchmark.cfg v2026.09.14 -Run from CS2 in-game console with: BB
+ generate Benchmark.cfg v2026.10.10 -Run from CS2 in-game console with: BB
  print last VProf from console.log if using launch option: -condebug
  print cl_showfps 4 stats from prof_mapname.csv output
  useful to pick a fps_max at the > 99% mark and benchmark again
@@ -76,9 +76,9 @@ $bb  = 'alias bb "alias set v2;sv_cheats 1;exec_async benchmark"'; if ($content 
 $bx  = 'alias bx "alias set vx;sv_cheats 1;exec_async benchmark"'; if ($content -notlike "*$bx*") { add-content $cfg "`r`n$bx" }
 $b5  = 'alias b5 "alias set v5;sv_cheats 1;exec_async benchmark"'; if ($content -notlike "*$b5*") { add-content $cfg "`r`n$b5" }
 
-$ver = 'v2026.09.14'
+$ver = 'v2026.10.10'
 if (((get-content "$GAME\cfg\benchmark.cfg" -raw -ea 0)+'') -notlike "*$ver*") { set-content "$GAME\cfg\benchmark.cfg" @'
-echo  Benchmark.cfg by AveYo       /// v2026.09.14       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
+echo  Benchmark.cfg by AveYo       /// v2026.10.10       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
 alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: BB
 alias bx "alias set vx;sv_cheats 1;exec_async benchmark" /// Can also loop 10 times with: BX
 alias b5 "alias set v5;sv_cheats 1;exec_async benchmark" /// Can also loop  5 times with: B5
@@ -234,9 +234,9 @@ toggle player_teamplayedlast ";wait" "2" ";done" "3" ";done" /// sv_full_alltalk
 '@
 }
 
-$ver2 = 'v2026.05.19'
+$ver2 = 'v2026.10.10'
 if (((get-content "$GAME\cfg\benchmark2.cfg" -raw -ea 0)+'') -notlike "*$ver2*") { set-content "$GAME\cfg\benchmark2.cfg" @'
-echo  Benchmark.cfg by AveYo       /// v2026.09.14       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
+echo  Benchmark.cfg by AveYo       /// v2026.10.10       /// Run with: alias set v2;sv_cheats 1;exec_async benchmark
 alias bb "alias set v2;sv_cheats 1;exec_async benchmark" /// Add this line in autoexec.cfg to just enter: BB
 alias bx "alias set vx;sv_cheats 1;exec_async benchmark" /// Can also loop 10 times with: BX
 alias b5 "alias set v5;sv_cheats 1;exec_async benchmark" /// Can also loop  5 times with: B5
@@ -641,8 +641,9 @@ sleep 200
 sleep 2200
 -attack
 +reload
-sleep 1200
+sleep 100
 -reload
+sleep 1100
 ent_fire bot_ct1 teleporttopoint "-25.488037 -745.269653 153.031189" /// T side upper 4
 sleep 100
 bot_mimic 0
@@ -848,7 +849,7 @@ log_flags InputService Developer DeveloperVerbose VScript BuildSparseShadowTree 
 log_flags Console -donotecho
 echo Benchmark.cfg by AveYo done! enter BB to run again, QQ or press F8 to force stop
 echoln " "
-loop // sv_cheats 0 or next loop if using BX to run 10 times
+loop // sv_cheats 0 or next loop if using B5/BX to run 5/10 times
 /// benchmark2.cfg
 '@
 }
