@@ -63,13 +63,13 @@ log_flags "Localization System" MaterialSystem SoundSystemLowLevel SndOperators 
 log_flags RenderPipelineCsgo AnimResource ResourceSystem Missions SteamNetSockets NetSteamConn Host Server Developer +donotecho;
 log_flags Console -donotecho; /// AveYo: less spam in the console
 
-/// AveYo: most valve servers are overwhelmed by cheating bots and vaclive crap - enabling buffers to mitigate the dl packet loss
-cl_net_buffer_ticks_use_interp 1; cl_net_buffer_ticks 2; cl_tickpacket_desired_queuelength 0; cl_interp_ratio 0;
-/// AveYo: if youre brave enough also try cl_tickpacket_desired_queuelength 5 ;)
-alias [ "cl_net_buffer_ticks 2; cl_interp_ratio 0; echoln LAG 1";
-alias ] "cl_net_buffer_ticks 0; cl_interp_ratio 0; echoln LAG 0"; /// AveYo: toggle buffers (along with interp) from console
+/// AveYo: toggle buffers (along with interp) from console as most valve servers are overwhelmed by cheating bots and vaclive crap
+alias lag "rate;cl_net_buffer_ticks;cl_tickpacket_desired_queuelength;cl_interp"
+alias { "cl_net_buffer_ticks 2; cl_tickpacket_desired_queuelength 2.24; cl_interp_ratio 2.56; rate 786432; lag" /// 40ms q
+alias [ "cl_net_buffer_ticks 1; cl_tickpacket_desired_queuelength 0.96; cl_interp_ratio 1.28; rate 786432; lag" /// 20ms q
+alias ] "cl_net_buffer_ticks 0; cl_tickpacket_desired_queuelength 0; cl_interp_ratio 0; rate 786432; lag" /// default
+[ // 20ms queue
 cl_predict_body_shot_fx 1; cl_predict_head_shot_fx 1; cl_predict_kill_ragdolls 0; /// AveYo: snappiness > fake dinks
-rate 1000000; // 98304 393216 524288 786432 1000000 /// AveYo: maximize data to help prediction
 //mm_dedicated_search_maxping 40;
 
 /// AveYo: controlling sens via mouse dpi + sdl env + windows mouse pointer speed instead
@@ -99,5 +99,6 @@ alias \ hideconsole;
 //bind ` +voicerecord;
 
 //bind F8 "disconnect;cl_showpos 0;sv_cheats 0;exec gamemode_competitive";
-```
 
+execifexists personal
+```
